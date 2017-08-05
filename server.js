@@ -22,7 +22,9 @@ app.post('/taskslist', (req, res) => {
 
     task.save().then(doc => {
         res.send(doc)
-    }).catch(e => res.send(e));
+    }, (e) => {
+        res.status(400).send(e)
+    })
 })
 
 app.get('/taskslist', (req, res) => {
@@ -53,6 +55,7 @@ app.patch('/taskslist/:id', (req, res) => {
         if (!task) {
           return res.status(404).send();
         }
+        console.log(task)
         res.send({task});
       })
       .catch(e => res.status(400).send());
