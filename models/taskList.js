@@ -14,6 +14,10 @@ var TaskList = mongoose.model('TaskList', {
     completed: {
         type: Boolean,
         default: false
+    },
+    _creator: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
     }
 });
 

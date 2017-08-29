@@ -17,10 +17,11 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 app.use(cors())
 
-app.post('/taskslist', (req, res) => {
+app.post('/taskslist',authenticate, (req, res) => {
     var task = new TaskList({
         task: req.body.task,
-        time: req.body.time
+        time: req.body.time,
+        _creator: req.user._id
     });
 
     task.save().then(doc => {
@@ -30,15 +31,17 @@ app.post('/taskslist', (req, res) => {
     })
 })
 
-app.get('/taskslist', (req, res) => {
-    TaskList.find().then((tasks) => {
+app.get('/taskslist',authenticate, (req, res) => {
+    TaskList.find({
+        _creator: req.user._id
+    }).then((tasks) => {
         res.send({ tasks })
     }, (e) => {
         res.status(400).send(e)
     })
 })
 
-app.patch('/taskslist/:id', (req, res) => {
+app.patch('/taskslist/:id', authenticate, (req, res) => {
     var id = req.params.id;
     var body = _.pick(req.body, ["completed"]);
     if(!ObjectID.isValid(id)) {
@@ -53,7 +56,7 @@ app.patch('/taskslist/:id', (req, res) => {
         }
     }
     
-    TaskList.findByIdAndUpdate(id, { $set: body }, { new: true })
+    TaskList.findOneAndUpdate({_id: id, _creator: req.user._id}, { $set: body }, { new: true })
       .then(task => {
         if (!task) {
           return res.status(404).send();
@@ -63,14 +66,17 @@ app.patch('/taskslist/:id', (req, res) => {
       .catch(e => res.status(400).send());
 });
 
-app.delete('/taskslist/:id', (req, res) => {
+app.delete('/taskslist/:id', authenticate, (req, res) => {
     var id = req.params.id;
 
     if(!ObjectID.isValid(id)){
         res.status(404).send();
     }
 
-    TaskList.findByIdAndRemove(id).then((task) => {
+    TaskList.findOneAndRemove({
+       _id: id,
+       _creator: req.user._id
+    }).then((task) => {
         if(!task) {
             res.status(404).send()
         }

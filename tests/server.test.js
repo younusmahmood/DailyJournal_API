@@ -16,6 +16,7 @@ describe('POST /taskslist', () => {
         
         request(app)
             .post('/taskslist')
+            .set('x-auth', users[0].tokens[0].token)
             .send({ task })
             .expect(200)
             .expect((res) => {
@@ -36,31 +37,35 @@ describe('POST /taskslist', () => {
 
     it('Should not create a task', (done) => {
         request(app)
-            .post('/taskslist')
-            .send({})
-            .expect(400)
-            .end((err,res) => {
-                if(err) {
-                    return done(err)
-                }
+          .post("/taskslist")
+          .set("x-auth", users[0].tokens[0].token)
+          .send({})
+          .expect(400)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
 
-                TaskList.find().then((tasks) => {
-                    expect(tasks.length).toBe(2)
-                    done()
-                }).catch(e => done(e))
-            })
+            TaskList.find()
+              .then(tasks => {
+                expect(tasks.length).toBe(2);
+                done();
+              })
+              .catch(e => done(e));
+          });
     })
 });
 
 describe('GET /tasksList', () => {
     it('Should return all lists of tasks', (done) => {
         request(app)
-            .get('/taskslist')
-            .expect(200)
-            .expect((res) => {
-                expect(res.body.tasks.length).toBe(2)
-            }) 
-            .end(done)
+          .get("/taskslist")
+          .set("x-auth", users[0].tokens[0].token)
+          .expect(200)
+          .expect(res => {
+            expect(res.body.tasks.length).toBe(1);
+          })
+          .end(done);
     })
 
 
@@ -71,35 +76,63 @@ describe('DELETE /taskslist/:id', () => {
         var id = tasks[0]._id.toHexString()
 
         request(app)
-            .delete(`/taskslist/${id}`)
-            .expect(200)
-            .expect((res) => {
-                expect(res.body.task._id).toBe(tasks[0]._id.toHexString())
-            })
-            .end((err,res) => {
-                if(err) { return done(err) }
+          .delete(`/taskslist/${id}`)
+          .set("x-auth", users[0].tokens[0].token)
+          .expect(200)
+          .expect(res => {
+            expect(res.body.task._id).toBe(tasks[0]._id.toHexString());
+          })
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
 
-                TaskList.findById(tasks[0]._id).then((task) => {
-                    expect(task).toNotExist();
-                    done()
-                }).catch((e) =>  done(e))
-            })
+            TaskList.findById(tasks[0]._id)
+              .then(task => {
+                expect(task).toNotExist();
+                done();
+              })
+              .catch(e => done(e));
+          });
     })
+
+    it("Should delete given task", done => {
+      var id = tasks[1]._id.toHexString();
+
+      request(app)
+        .delete(`/taskslist/${id}`)
+        .set("x-auth", users[0].tokens[0].token)
+        .expect(404)
+        .end((err, res) => {
+          if (err) {
+            return done(err);
+          }
+
+          TaskList.findById(tasks[0]._id)
+            .then(task => {
+              expect(task).toExist();
+              done();
+            })
+            .catch(e => done(e));
+        });
+    });
 
     it('Should return a 404 for nonexistent ID', (done) => {
         var id = new ObjectID()
 
         request(app)
-            .delete(`/taskslist/${id}`)
-            .expect(404)
-            .end(done)
+          .delete(`/taskslist/${id}`)
+          .set("x-auth", users[0].tokens[0].token)
+          .expect(404)
+          .end(done);
     });
 
     it('Should return a 404 for non ObjectIDs', (done) => {
         request(app)
-            .delete(`/taskslist/123`)
-            .expect(404)
-            .end(done);
+          .delete(`/taskslist/123`)
+          .set("x-auth", users[0].tokens[0].token)
+          .expect(404)
+          .end(done);
     })
 })
 
@@ -109,29 +142,32 @@ describe('PATCH /taskslist/:id', () => {
         var completed = true;
 
         request(app)
-            .patch(`/taskslist/${id}`)
-            .send({ completed })
-            .expect(200)
-            .expect((res) => {
-                expect(res.body.task.completed).toBe(false)
-            })
-            .end(done)
+          .patch(`/taskslist/${id}`)
+          .set("x-auth", users[1].tokens[0].token)
+          .send({ completed })
+          .expect(200)
+          .expect(res => {
+            expect(res.body.task.completed).toBe(false);
+          })
+          .end(done);
     })
 
     it('Should return a 404 for nonexistent ID', (done) => {
         var id = new ObjectID()
 
         request(app)
-            .patch(`/taskslist/${id}`)
-            .expect(404)
-            .end(done);
+          .patch(`/taskslist/${id}`)
+          .set("x-auth", users[0].tokens[0].token)
+          .expect(404)
+          .end(done);
     })
 
     it('Should return a 404 for non objectIDs', (done) => {
         request(app)
-            .patch(`/taskslist/123`)
-            .expect(404)
-            .end(done);
+          .patch(`/taskslist/123`)
+          .set("x-auth", users[0].tokens[0].token)
+          .expect(404)
+          .end(done);
     })
 })
 
@@ -228,7 +264,7 @@ describe('POST /users/login', () => {
                 }
 
                 User.findById(users[1]._id).then((user) => {
-                    expect(user.tokens[0]).toInclude({
+                    expect(user.tokens[1]).toInclude({
                         access: 'auth',
                         token: res.headers['x-auth']
                     })
@@ -258,7 +294,7 @@ describe('POST /users/login', () => {
 
                 User.findById(users[1]._id)
                   .then(user => {
-                    expect(user.tokens.length).toBe(0);
+                    expect(user.tokens.length).toBe(1);
                     done();
                   })
                   .catch(e => {
@@ -266,5 +302,24 @@ describe('POST /users/login', () => {
                   });
               });
 
+    })
+})
+
+describe('DELETE /users/me/token', () => {
+    it('Should remove auth token on logout', (done) => {
+        request(app)
+            .delete('/users/me/token')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .end((err, res) => {
+                if(err) {
+                    return done(err)
+                }
+
+                User.findById(users[0]._id).then((user) => {
+                    expect(user.tokens.length).toBe(0)
+                    done()
+                }).catch(e => done(e))
+            })
     })
 })
