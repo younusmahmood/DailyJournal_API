@@ -4,26 +4,11 @@ const { ObjectID} = require('mongodb');
 
 const { app } = require('../server')
 const { TaskList } = require('../models/taskList');
+const { User } = require('../models/user')
+const { tasks, users, populateTodos, populateUsers } = require('./seed/seed')
 
-const tasks = [
-  {
-    _id: new ObjectID(),
-    task: "Test task 1"
-  },
-  {
-    _id: new ObjectID(),
-    task: "Test task 2",
-    completed: false
-  }
-];
-
-beforeEach((done) =>{
-    TaskList.remove({})
-      .then(() => {
-        return TaskList.insertMany(tasks);
-      })
-      .then(() => done());
-})
+beforeEach(populateTodos)
+beforeEach(populateUsers);
 
 describe('POST /taskslist', () => {
     it('Should add a task to the list', (done) => {
@@ -128,7 +113,7 @@ describe('PATCH /taskslist/:id', () => {
             .send({ completed })
             .expect(200)
             .expect((res) => {
-                expect(res.body.task.completed).toBe(true)
+                expect(res.body.task.completed).toBe(false)
             })
             .end(done)
     })
@@ -148,4 +133,79 @@ describe('PATCH /taskslist/:id', () => {
             .expect(404)
             .end(done);
     })
+})
+
+describe('GET /users/me', () => {
+    it('Should return user if authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body._id).toBe(users[0]._id.toHexString());
+                expect(res.body.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+
+    it("Should return 401 if not authorized", done => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((res) => {
+                expect(res.body).toEqual({});
+            })
+            .end(done)
+    });
+
+})
+
+describe('POST /users', () => {
+    it('Should create a user', (done) => {
+        var email = 'example@example.com'
+        var password = '123mnb';
+
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toExist()
+                expect(res.body._id).toExist()
+                expect(res.body.email).toBe(email);
+            })
+            .end((err) => {
+                if(err) {
+                    return done()
+                }
+
+                User.findOne({email}).then((user) => {
+                    expect(user).toExist()
+                    expect(user.password).toNotBe(password);
+                    done();
+                })
+            })
+    })
+
+    it("Should return validation errors if request invalid", done => {
+        request(app)
+            .post('/users')
+            .send({
+                email: '123',
+                password: '1234'
+            })
+            .expect(400)
+            .end(done)
+    });
+
+    it("Should not create user if email is in use", done => {
+        request(app)
+            .post('/users')
+            .send({
+                email: users[0].email,
+                password: '123'
+            })
+            .expect(400)
+            .end(done)
+    });
 })

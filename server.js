@@ -58,7 +58,6 @@ app.patch('/taskslist/:id', (req, res) => {
         if (!task) {
           return res.status(404).send();
         }
-        console.log(task)
         res.send({task});
       })
       .catch(e => res.status(400).send());
