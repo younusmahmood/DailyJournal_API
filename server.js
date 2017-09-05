@@ -17,6 +17,11 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 app.use(cors())
 
+app.use((req,res,next) => {
+    res.header("Access-Control-Expose-Headers", "x-auth");
+    next();
+})
+
 app.post('/taskslist',authenticate, (req, res) => {
     var task = new TaskList({
         task: req.body.task,
