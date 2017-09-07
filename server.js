@@ -106,7 +106,7 @@ app.post('/users', (req, res) => {
             errorMessage = "Email already exists"
         } 
         console.log(errorMessage)
-        res.status(400).send(errorMessage)
+        res.status(400).send(e)
     })
 
 });
