@@ -95,13 +95,18 @@ app.delete('/taskslist/:id', authenticate, (req, res) => {
 app.post('/users', (req, res) => {
     var body = _.pick(req.body, ['email', 'password']);
     var user = new User(body)
+    var errorMessage = 'Password must contain at least 6 characters'
 
     user.save().then(() => {
         return user.generateAuthToken();
     }).then((token) => {
         res.header('x-auth', token).send(user);
     }).catch((e) => {
-        res.status(400).send(e)
+        if(e.code === 11000){
+            errorMessage = "Email already exists"
+        } 
+        console.log(errorMessage)
+        res.status(400).send(errorMessage)
     })
 
 });
@@ -118,7 +123,7 @@ app.post('/users/login', (req, res) => {
         res.header("x-auth", token).send(user);
      })
    }).catch((e) => {
-       res.status(400).send()
+       res.status(400).send("Invalid email or password")
    })
 })
 
