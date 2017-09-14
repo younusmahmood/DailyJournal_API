@@ -8,6 +8,7 @@ const { ObjectID } = require('mongodb');
 
 var { mongoose } = require('./db/mongoose');
 var { TaskList } = require('./models/taskList');
+var { Journal } = require('./models/journal')
 var { User } = require('./models/user')
 var { authenticate } = require('./middleware/authenticate');
 
@@ -22,23 +23,51 @@ app.use((req,res,next) => {
     next();
 })
 
-app.post('/taskslist',authenticate, (req, res) => {
-    var task = new TaskList({
-        task: req.body.task,
-        time: req.body.time,
-        _creator: req.user._id
-    });
+app.post('/taskslist/:id',authenticate, (req, res) => {
+  var task = new TaskList({
+    task: req.body.task,
+    time: req.body.time,
+    _creator: req.user._id,
+    _journal: req.params.id
+  });
 
-    task.save().then(doc => {
-        res.send(doc)
-    }, (e) => {
-        res.status(400).send(e)
-    })
+  task.save().then(doc => {
+      res.send(doc);
+    }, e => {
+      res.status(400).send(e);
+    });
 })
 
-app.get('/taskslist',authenticate, (req, res) => {
+app.post('/journals', authenticate, (req, res) => {
+        var journal = new Journal({
+          _creator: req.user._id,
+          title: req.body.title
+        });
+
+        journal.save().then(doc => {
+            res.send(doc)
+        }, (e) => {
+            res.status(400).send(e)
+        })
+})
+
+app.get("/journals", authenticate, (req, res) => {
+  Journal.find({
+    _creator: req.user._id
+  }).then(
+    journals => {
+      res.send({ journals });
+    },
+    e => {
+      res.status(400).send(e);
+    }
+  );
+});
+
+app.get('/taskslist/:id',authenticate, (req, res) => {
     TaskList.find({
-        _creator: req.user._id
+        _creator: req.user._id,
+        _journal: req.params.id
     }).then((tasks) => {
         res.send({ tasks })
     }, (e) => {
