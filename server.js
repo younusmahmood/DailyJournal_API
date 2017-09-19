@@ -75,6 +75,21 @@ app.get('/taskslist/:id',authenticate, (req, res) => {
     })
 })
 
+app.get("/notes/:id", authenticate, (req, res) => {
+  Journal.find({
+      _id: req.params.id,
+    _creator: req.user._id
+  }).then(
+    journal => {
+     var notes = journal[0].notes
+      res.send({ notes });
+    },
+    e => {
+      res.status(400).send(e);
+    }
+  );
+});
+
 app.patch('/taskslist/:id', authenticate, (req, res) => {
     var id = req.params.id;
     var body = _.pick(req.body, ["completed"]);
@@ -100,6 +115,27 @@ app.patch('/taskslist/:id', authenticate, (req, res) => {
       .catch(e => res.status(400).send());
 });
 
+app.patch("/journals/notes/:id", authenticate, (req, res) => {
+  var id = req.params.id;
+  var body = _.pick(req.body, ["text"]);
+  if (!ObjectID.isValid(id)) {
+    res.status(404).send();
+  }
+
+  Journal.findOneAndUpdate(
+    { _id: id, _creator: req.user._id},
+    { $set: {notes: body.text} },
+    { new: true }
+  ).then(journal => {
+      if (!journal) {
+        return res.status(404).send();
+      }
+      var notes = journal.notes
+      res.send({ journal });
+    })
+    .catch(e => res.status(400).send());
+});
+
 app.delete('/taskslist/:id', authenticate, (req, res) => {
     var id = req.params.id;
 
@@ -120,6 +156,32 @@ app.delete('/taskslist/:id', authenticate, (req, res) => {
     }).catch((e) => res.status(404).send());
 
 });
+
+app.delete('/journal/:id', authenticate, (req, res) => {
+    var id = req.params.id;
+
+    if (!ObjectID.isValid(id)) {
+      res.status(404).send();
+    }
+
+    TaskList.remove({ _journal: id })
+      .then(task => {
+        if (!task) {
+          res.status(404).send();
+        }
+      })
+      .catch(e => res.status(404).send());
+
+     Journal.findByIdAndRemove({ _id: id })
+       .then(journal => {
+         if (!journal) {
+           res.status(404).send();
+         }
+         res.send({ journal });
+       })
+       .catch(e => res.status(404).send());
+
+})
 
 app.post('/users', (req, res) => {
     var body = _.pick(req.body, ['email', 'password']);
