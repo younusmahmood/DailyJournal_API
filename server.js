@@ -24,6 +24,7 @@ app.use((req,res,next) => {
 })
 
 app.post('/taskslist/:id',authenticate, (req, res) => {
+    console.log(req);
   var task = new TaskList({
     task: req.body.task,
     time: req.body.time,
