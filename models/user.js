@@ -43,11 +43,10 @@ UserSchema.methods.toJSON = function () {
 }
 
 UserSchema.methods.generateAuthToken = function () {
-    console.log('HEROKU TOUCHED')
     var user = this;
     var access = 'auth'
     var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
-
+    console.log("HEROKU LOG: " + token)
     user.tokens.push({ access, token });
 
     return user.save().then(() => {
