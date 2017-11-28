@@ -69,7 +69,7 @@ UserSchema.statics.findByToken = function (token) {
     var decoded;
 
     try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
+        decoded = jwt.verify(token, 'abc123');
     } catch (e) {
         return Promise.reject()
     }
