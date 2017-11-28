@@ -189,6 +189,7 @@ app.post('/users', (req, res) => {
     var errorMessage = 'Password must contain at least 6 characters'
 
     user.save().then(() => {
+        console.log('hitting save')
         return user.generateAuthToken();
     }).then((token) => {
         res.header('x-auth', token).send(user);
