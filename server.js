@@ -196,7 +196,7 @@ app.post('/users', (req, res) => {
         if(e.code === 11000){
             errorMessage = "Email already exists"
         } 
-        console.error("Description of error location: " + e.stack.join("\n"));
+
         res.status(400).send(e)
     })
 
