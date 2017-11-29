@@ -77,17 +77,14 @@ app.get('/taskslist/:id',authenticate, (req, res) => {
 
 app.get("/notes/:id", authenticate, (req, res) => {
   Journal.find({
-      _id: req.params.id,
-    _creator: req.user._id
-  }).then(
-    journal => {
-     var notes = journal[0].notes
+    _id: req.params.id,
+    _creator: req.user._id.toString()
+  }).then(journal => {
+      var notes = journal[0].notes;
       res.send({ notes });
-    },
-    e => {
+    }, e => {
       res.status(400).send(e);
-    }
-  );
+    });
 });
 
 app.patch('/taskslist/:id', authenticate, (req, res) => {
