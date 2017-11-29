@@ -24,7 +24,6 @@ app.use((req,res,next) => {
 })
 
 app.post('/taskslist/:id',authenticate, (req, res) => {
-    console.log(req);
   var task = new TaskList({
     task: req.body.task,
     time: req.body.time,
@@ -68,7 +67,7 @@ app.get("/journals", authenticate, (req, res) => {
 app.get('/taskslist/:id',authenticate, (req, res) => {
     TaskList.find({
         _creator: req.user._id,
-        _journal: req.params.id
+        _journal: ObjectID(req.params.id)
     }).then((tasks) => {
         res.send({ tasks })
     }, (e) => {
