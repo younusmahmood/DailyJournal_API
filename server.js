@@ -65,10 +65,9 @@ app.get("/journals", authenticate, (req, res) => {
 });
 
 app.get('/taskslist/:id',authenticate, (req, res) => {
-    var id = mongoose.Types.ObjectId(req.params.id);
     TaskList.find({
       _creator: req.user._id,
-      _journal: id
+     // _journal: req.params.id
     }).then(tasks => {
         res.send({ tasks });
       }, e => {
