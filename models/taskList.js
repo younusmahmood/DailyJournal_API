@@ -20,7 +20,7 @@ var TasksSchema = new mongoose.Schema({
     required: true
   },
   _journal: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true
   }
 });

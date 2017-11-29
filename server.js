@@ -67,7 +67,7 @@ app.get("/journals", authenticate, (req, res) => {
 app.get('/taskslist/:id',authenticate, (req, res) => {
     TaskList.find({
       _creator: req.user._id,
-     // _journal: req.params.id
+     _journal: req.params.id.toString()
     }).then(tasks => {
         res.send({ tasks });
       }, e => {
